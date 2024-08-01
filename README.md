@@ -48,3 +48,28 @@ To run the app locally:
 - Bootstrap 5
 - WebAssembly (Age encryption tool)
 - GitHub API (for fetching SSH signing keys)
+
+## Compiling the WebAssembly File
+
+To compile the WebAssembly file for the Age encryption tool:
+
+1. Clone the Age repository:
+
+   ```
+   git clone https://github.com/FiloSottile/age.git
+   cd age
+   ```
+
+2. Checkout the specific version tag (v1.2.0):
+
+   ```
+   git checkout v1.2.0
+   ```
+
+3. Compile the WebAssembly file:
+
+   ```
+   GOOS=wasip1 GOARCH=wasm go build -o age.wasm ./cmd/age
+   ```
+
+This produces the `age.wasm` file, which you can put in the `vendor` directory.
