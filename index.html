@@ -158,6 +158,7 @@
           const encryptedOutput = document.getElementById("encryptedOutput");
           encryptedOutput.disabled = true;
           encryptedOutput.value = "Loading recipient keys...";
+          const warnings = [];
           try {
             const recipients = recipientInput
               .split("\n")
@@ -171,7 +172,10 @@
                       return await fetchGitHubKeys(recipient.substr(1));
                     } catch (error) {
                       console.error(error);
-                      return recipient; // Fall back to using the input as-is if GitHub fetch fails
+                      warnings.push(
+                        `Unable to fetch keys for ${recipient}: ${error.message}`
+                      );
+                      return [];
                     }
                   }
                   return recipient;
@@ -185,7 +189,11 @@
               if (result.exitCode === 0) {
                 encryptedOutput.value = result.stdout;
               } else {
-                encryptedOutput.value = `Error: ${result.stderr}\nExit code: ${result.exitCode}`;
+                encryptedOutput.value =
+                  warnings
+                    .map((warning) => `Warning: ${warning}\n\n`)
+                    .join("") +
+                  `Error: ${result.stderr}\nExit code: ${result.exitCode}`;
               }
             } catch (error) {
               encryptedOutput.value = `Error: ${error.message}`;
