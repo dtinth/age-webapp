@@ -145,12 +145,17 @@
         return Object.fromEntries(new URLSearchParams(hash));
       }
 
-      window.addEventListener("load", () => {
+      function updateRecipientFromHash() {
         const params = parseHashParams();
-        if (params.to) {
-          document.getElementById("recipientInput").value = params.to;
+        const recipientInput = document.getElementById("recipientInput");
+        if (params.to && params.to !== recipientInput.dataset.lastTo) {
+          recipientInput.value = params.to.split(",").join("\n");
+          recipientInput.dataset.lastTo = params.to;
         }
-      });
+      }
+
+      window.addEventListener("load", updateRecipientFromHash);
+      window.addEventListener("hashchange", updateRecipientFromHash);
 
       document
         .getElementById("encryptButton")
