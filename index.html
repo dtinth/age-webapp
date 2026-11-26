@@ -67,36 +67,27 @@
     </div>
 
     <script type="module">
-      import buffer from "https://cdn.jsdelivr.net/npm/safe-buffer/+esm";
-      Object.assign(globalThis, { Buffer: buffer.Buffer });
-
-      import {
-        WASI,
-        init,
-      } from "https://cdn.jsdelivr.net/npm/@wasmer/wasi@1.2.2/dist/Library.esm.js";
-      await init();
-
-      const modulePromise = (async () => {
-        const moduleBytes = await fetch("vendor/age-1.2.0.wasm");
-        const module = await WebAssembly.compileStreaming(moduleBytes);
-        return module;
-      })();
-
       async function encrypt(text, recipients) {
-        const wasi = new WASI({
-          args: [
-            "age",
-            "--armor",
-            ...recipients.flatMap((recipient) => ["--recipient", recipient]),
-          ],
-          env: {},
+        const worker = new Worker("encrypt-worker.js", { type: "module" });
+        return new Promise((resolve, reject) => {
+          worker.onmessage = ({ data }) => {
+            worker.terminate();
+            if (data.error !== undefined) {
+              reject(new Error(data.error));
+            } else {
+              resolve(data);
+            }
+          };
+          worker.onerror = (event) => {
+            worker.terminate();
+            reject(new Error(event.message || "Failed to load encryption worker"));
+          };
+          worker.onmessageerror = () => {
+            worker.terminate();
+            reject(new Error("Failed to receive encryption result"));
+          };
+          worker.postMessage({ text, recipients });
         });
-        wasi.setStdinString(text);
-        await wasi.instantiate(await modulePromise, {});
-        const exitCode = wasi.start();
-        const stdout = wasi.getStdoutString();
-        const stderr = wasi.getStderrString();
-        return { stdout, stderr, exitCode };
       }
 
       async function fetchGitHubKeys(username) {
